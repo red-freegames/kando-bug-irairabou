@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05070f">
+<meta name="description" content="指を1ミリ動かすと玉がワープする。感度が×2から×100まで上がっていくスマホ用イライラ棒ゲーム。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="イライラ棒">
+<meta name="format-detection" content="telephone=no">
+<meta property="og:type" content="website">
+<meta property="og:title" content="感度バグりイライラ棒">
+<meta property="og:description" content="指を1ミリ動かすと玉がワープする。感度×2から×100まで上がっていくイライラ棒。">
+<meta property="og:url" content="https://red-freegames.github.io/kando-bug-irairabou/">
+<meta property="og:image" content="https://red-freegames.github.io/kando-bug-irairabou/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://red-freegames.github.io/kando-bug-irairabou/">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>感度バグりイライラ棒</title>
+<style>
+  :root{ --ink:#1b1f2e; --paper:#fffdf6; --hud-bg:rgba(255,255,255,.08); --miss:#ff4d6d; --win:#ffc23d; --neon:#38e1ff; }
+  html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:#05070f;color:#fff;position:fixed;inset:0;
+    touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif}
+  body{display:flex;justify-content:center;align-items:stretch}
+  #wrap{position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.8)}
+  canvas{display:block;touch-action:none}
+  #hud{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 8px 0;
+    display:flex;gap:5px;align-items:center;pointer-events:none;font-size:12px;font-weight:700}
+  .pill{background:var(--hud-bg);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 9px;white-space:nowrap}
+  #sens{color:#ff5df2;font-size:14px}
+  #miss{flex:1;text-align:center;min-width:0;overflow:hidden}
+  .hbtn{pointer-events:auto;border:1px solid rgba(255,255,255,.18);background:var(--hud-bg);color:#fff;border-radius:999px;height:34px;min-width:40px;
+    font-family:inherit;font-weight:900;font-size:12px;line-height:1;cursor:pointer;padding:0 10px;-webkit-appearance:none;appearance:none}
+  .hbtn:active{transform:scale(.94)}
+  #homeBtn{color:#50ff8c}
+  #snd{font-size:14px;padding:0}
+  /* ホーム画面 */
+  #home{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    padding:calc(env(safe-area-inset-top) + 20px) 24px calc(env(safe-area-inset-bottom) + 20px);box-sizing:border-box;
+    background:radial-gradient(ellipse at 50% 40%,rgba(5,7,15,.55),rgba(5,7,15,.92));text-align:center;transition:opacity .25s}
+  #home.hide{opacity:0;pointer-events:none}
+  .logo{font-weight:900;line-height:1.05;font-size:clamp(40px,13vw,58px);letter-spacing:.02em;
+    color:#fff;text-shadow:0 0 12px #38e1ff,0 0 32px rgba(56,225,255,.6)}
+  .logo small{display:block;font-size:.38em;color:#ff5df2;text-shadow:0 0 10px rgba(255,93,242,.7);letter-spacing:.2em;margin-bottom:6px}
+  .tagline{margin:0 0 6px;font-size:14px;color:#c9d3ff;font-weight:700}
+  #hbest{font-size:12px;color:#ffe36a;min-height:16px}
+  .big{display:block;width:min(280px,100%);box-sizing:border-box;padding:15px 0;border-radius:16px;border:0;cursor:pointer;
+    font-family:inherit;font-weight:900;font-size:18px;line-height:1;text-decoration:none;-webkit-appearance:none;appearance:none;transition:transform .08s}
+  .big[hidden]{display:none}
+  .big:active{transform:scale(.96)}
+  #btnStart{background:linear-gradient(180deg,#5cf0ff,#1fb7e0);color:#04111f;box-shadow:0 0 24px rgba(56,225,255,.55)}
+  #btnCont{background:rgba(255,194,61,.14);color:#ffc23d;border:2px solid #ffc23d}
+  .how{margin:4px 0;font-size:12px;line-height:1.7;color:#9aa3c7;max-width:300px}
+  .how b{color:#fff}
+  /* ===== RED FREE GAMES 共通：他のゲーム・要望フォーム・フッター ===== */
+  .t-more{display:block;width:min(280px,100%);box-sizing:border-box;padding:13px;border-radius:999px;text-align:center;text-decoration:none;font-weight:900;font-size:16px;
+    color:#fff;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.35)}
+  .t-more:active{transform:scale(.97)}
+  .fb-link{display:block;margin-top:2px;font-size:12.5px;font-weight:700;color:#9aa3c7;text-decoration:underline;text-align:center}
+  .site-foot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:4px;font-size:11.5px;font-weight:700;color:#9aa3c7}
+  .site-foot .coffee{background:#ffdd57;color:#2a1a14;border:2px solid #2a1a14;border-radius:99px;padding:6px 12px;text-decoration:none}
+  .site-foot .pv{color:#9aa3c7;font-weight:600;text-decoration:underline}
+  @media (max-height:640px){ .logo{font-size:40px} .how{display:none} #home{gap:9px} }
+  /* 横向き警告 */
+  #rotate{display:none;position:absolute;inset:0;z-index:20;background:#05070f;align-items:center;justify-content:center;text-align:center;font-weight:900;font-size:16px;line-height:1.8}
+  @media (orientation:landscape) and (max-height:500px){ #rotate{display:flex} }
+  #hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 14px);text-align:center;
+    font-size:13px;font-weight:700;text-shadow:0 1px 3px #000;pointer-events:none;transition:opacity .3s}
+  #hint small{color:#ffe36a;font-size:11px}
+  #card{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) scale(.6) rotate(-4deg);opacity:0;
+    width:min(86%,380px);box-sizing:border-box;padding:16px 16px 12px;border-radius:18px;background:var(--paper);color:var(--ink);
+    text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 0 4px var(--miss);pointer-events:none;
+    transition:transform .28s cubic-bezier(.2,1.6,.4,1),opacity .2s}
+  #card.show{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-2deg)}
+  #card.win{box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 0 4px var(--win)}
+  #ctag{display:inline-block;font-size:12px;font-weight:900;letter-spacing:.12em;color:#fff;background:var(--miss);border-radius:6px;padding:2px 10px}
+  #card.win #ctag{background:#e89b00}
+  #cttl{font-size:clamp(19px,5.6vw,25px);font-weight:900;line-height:1.3;margin:10px 0 8px}
+  #cttl::before{content:"称号：";display:block;font-size:11px;color:#8a8fa3;font-weight:700}
+  #csub{font-size:12px;line-height:1.6;color:#434a61}
+  #csub span{display:inline-block;background:#eceef5;border-radius:6px;padding:1px 7px;margin:2px}
+  #cnx{margin-top:8px;font-size:11px;color:#8a8fa3}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="hud">
+    <button class="hbtn" id="homeBtn">HOME</button>
+    <div class="pill" id="stage">STAGE 1</div>
+    <div class="pill" id="sens">感度 ×2</div>
+    <div class="pill" id="miss">ミス 0</div>
+    <button class="hbtn" id="snd" aria-label="サウンド切替">🔊</button>
+  </div>
+  <div id="hint">画面のどこでも指でなぞって<b>光る玉</b>を動かせ<br><small>壁に触れたら感電 → スタートへ戻る／ステージごとに感度が上がる</small></div>
+  <div id="card"><div id="ctag">MISS</div><div id="cttl"></div><div id="csub"></div><div id="cnx">タップで次へ</div></div>
+  <div id="home">
+    <div class="logo"><small>感度バグり</small>イライラ棒</div>
+    <p class="tagline">指を1ミリ動かすと、玉はワープする。</p>
+    <div id="hbest"></div>
+    <button class="big" id="btnStart">スタート</button>
+    <button class="big" id="btnCont" hidden>続きから</button>
+    <div class="how">画面のどこでも<b>なぞる</b>と玉が動く（感度×N）。<br>壁に触れたら<b>感電</b>してスタートへ。<br>ステージごとに感度が <b>×2 → ×100</b> まで上がる。</div>
+    <a class="t-more" href="https://red-freegames.github.io/">🎮 他のゲームを見る</a>
+    <a class="fb-link" id="fbTitle" target="_blank" rel="noopener">💬 要望・バグ報告はこちら</a>
+    <footer class="site-foot">
+      <a class="coffee" href="https://buymeacoffee.com/red_freegames" target="_blank" rel="noopener">開発者にコーヒーを奢る☕</a>
+      <span>配信・動画利用大歓迎！商用利用OK</span>
+      <a class="pv" href="https://red-freegames.github.io/privacy.html" target="_blank" rel="noopener">プライバシー</a>
+    </footer>
+  </div>
+  <div id="rotate">📱 縦向きで遊んでね</div>
+</div>
+<script>
+(() => {
+'use strict';
+// ====== ステージ設定（感度がどんどんバカになる） ======
+const STAGES = [
+  { sens: 2,   hw: 34, turns: 3 },
+  { sens: 3,   hw: 30, turns: 4 },
+  { sens: 5,   hw: 27, turns: 4 },
+  { sens: 8,   hw: 24, turns: 5 },
+  { sens: 12,  hw: 22, turns: 5 },
+  { sens: 20,  hw: 20, turns: 6 },
+  { sens: 50,  hw: 18, turns: 6 },
+  { sens: 100, hw: 16, turns: 7 },
+];
+const CR = 6;            // 玉の半径
+const STEP = 1.5;        // 当たり判定の刻み(px)：ワープしても壁はすり抜けない
+
+const wrap = document.getElementById('wrap');
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const $stage = document.getElementById('stage');
+const $sens = document.getElementById('sens');
+const $miss = document.getElementById('miss');
+const $hint = document.getElementById('hint');
+const $card = document.getElementById('card');
+const $ctag = document.getElementById('ctag');
+const $cttl = document.getElementById('cttl');
+const $csub = document.getElementById('csub');
+const $snd = document.getElementById('snd');
+const $hud = document.getElementById('hud');
+const $home = document.getElementById('home');
+const $hbest = document.getElementById('hbest');
+const $btnStart = document.getElementById('btnStart');
+const $btnCont = document.getElementById('btnCont');
+
+/* =====================================================
+   RED FREE GAMES 共通（他のゲーム・要望フォーム・アクセス解析）
+===================================================== */
+const SITE_URL = 'https://red-freegames.github.io/';
+// 要望・バグ報告フォーム（共通のGoogleフォーム）。「対象のゲーム」に同じ名前の選択肢を追加すると選択済みで開く
+const GAME_NAME = '感度バグりイライラ棒';
+const FEEDBACK_VIEW = 'https://docs.google.com/forms/d/e/1FAIpQLSfJ2DevI46AJiB_kUAmPGOvckFRqzzSP_iCVd5qiikxr9SIOg/viewform';
+document.getElementById('fbTitle').href = `${FEEDBACK_VIEW}?usp=pp_url&entry.2056875219=${encodeURIComponent(GAME_NAME)}`;
+// アクセス解析（Googleアナリティクス4）。本番（github.io）でだけ計測し、画面には何も出さない
+const GA_ID = 'G-FC7LD0DJTQ';
+(function initAnalytics() {
+  if (!GA_ID || !/\.github\.io$/.test(location.hostname)) return;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { dataLayer.push(arguments); };
+  gtag('js', new Date()); gtag('config', GA_ID, { page_title: GAME_NAME });
+  const s = document.createElement('script'); s.async = true;
+  s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(GA_ID);
+  document.head.appendChild(s);
+})();
+// ゲーム内の出来事を記録する（失敗しても遊びには影響させない）
+function track(name, params) { try { if (window.gtag) gtag('event', name, params || {}); } catch (e) {} }
+
+let W, H, DPR, TOP, BOTTOM;
+let stageIdx = 0, misses = 0, totalMiss = 0;
+let course = null;       // { nodes(正規化), pts(px), segs, len, hw, start, goal, padR }
+let state = 'home';      // home | ready | playing | dead | clear
+let cur = { x: 0, y: 0 };
+let finger = null;       // { id, x, y }
+let run = null;
+let path = [], ghosts = [];
+let particles = [], popups = [], bolts = [];
+let shake = 0, flash = 0, cardAt = 0, cardTimer = 0;
+let lastT = performance.now();
+
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.random() * a.length | 0];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const ST = () => STAGES[Math.min(stageIdx, STAGES.length - 1)];
+
+let best = 0;
+try { best = +localStorage.getItem('iraira_best') || 0; } catch (e) {}
+
+// ====== サウンド ======
+let ac = null, noiseBuf = null, muted = false;
+function ensureAudio() {
+  if (ac || muted) { if (ac && ac.state === 'suspended') ac.resume(); return; }
+  try {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.8, ac.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  } catch (e) { ac = null; }
+}
+function tone(f1, f2, dur, type = 'sine', vol = 0.15, delay = 0) {
+  if (!ac || muted) return;
+  const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f1, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+function noise(dur, vol = 0.3, freq = 1200) {
+  if (!ac || muted) return;
+  const t = ac.currentTime, s = ac.createBufferSource(), g = ac.createGain(), fl = ac.createBiquadFilter();
+  s.buffer = noiseBuf; fl.type = 'bandpass'; fl.frequency.value = freq; fl.Q.value = 0.7;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(fl).connect(g).connect(ac.destination); s.start(t); s.stop(t + dur);
+}
+const sfx = {
+  zap() { tone(70, 55, 0.5, 'sawtooth', 0.22); tone(140, 110, 0.5, 'square', 0.08); noise(0.5, 0.5, 2500); },
+  clear() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, f, 0.2, 'square', 0.06, i * 0.08)); },
+  go() { tone(660, 990, 0.08, 'triangle', 0.1); },
+};
+function buzz(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+$snd.addEventListener('click', () => { muted = !muted; $snd.textContent = muted ? '🔇' : '🔊'; if (!muted) ensureAudio(); });
+
+// ====== コース ======
+function genCourse() {
+  const st = ST();
+  const nodes = [{ x: 0.5, y: 1 }];
+  let side = Math.random() < 0.5 ? 0 : 1;
+  for (let i = 1; i <= st.turns; i++) {
+    const y = 1 - i / (st.turns + 1);
+    const x = side ? rnd(0.68, 0.86) : rnd(0.14, 0.32);
+    nodes.push({ x, y });
+    side ^= 1;
+  }
+  nodes.push({ x: rnd(0.3, 0.7), y: 0 });
+  course = { nodes, hw: st.hw };
+  buildCourse();
+}
+function buildCourse() {
+  const c = course;
+  const mx = c.hw + 14;
+  c.pts = c.nodes.map(n => ({ x: mx + n.x * (W - mx * 2), y: TOP + n.y * (BOTTOM - TOP) }));
+  // 両端はパッドの中心
+  c.padR = c.hw + 12;
+  c.start = c.pts[0]; c.goal = c.pts[c.pts.length - 1];
+  c.segs = []; let acc = 0;
+  for (let i = 0; i < c.pts.length - 1; i++) {
+    const a = c.pts[i], b = c.pts[i + 1], l = Math.hypot(b.x - a.x, b.y - a.y);
+    c.segs.push({ a, b, l, acc }); acc += l;
+  }
+  c.len = acc;
+}
+function nearest(p) {
+  let bd = Infinity, bs = 0;
+  for (const s of course.segs) {
+    const dx = s.b.x - s.a.x, dy = s.b.y - s.a.y;
+    const t = clamp(((p.x - s.a.x) * dx + (p.y - s.a.y) * dy) / (s.l * s.l || 1), 0, 1);
+    const d = Math.hypot(p.x - (s.a.x + dx * t), p.y - (s.a.y + dy * t));
+    if (d < bd) { bd = d; bs = s.acc + t * s.l; }
+  }
+  return { d: bd, s: bs };
+}
+const inPad = (p, c) => Math.hypot(p.x - c.x, p.y - c.y) <= course.padR - CR;
+function safe(p) { return inPad(p, course.start) || inPad(p, course.goal) || nearest(p).d <= course.hw - CR; }
+const atGoal = p => Math.hypot(p.x - course.goal.x, p.y - course.goal.y) <= course.padR * 0.55;
+
+// ====== レイアウト ======
+function layout() {
+  DPR = Math.min(window.devicePixelRatio || 1, 3);
+  const vv = window.visualViewport;
+  W = Math.min(Math.round(vv ? vv.width : window.innerWidth), 520);
+  H = Math.round(vv ? vv.height : window.innerHeight);
+  wrap.style.width = W + 'px'; wrap.style.height = H + 'px';
+  cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  TOP = Math.max(100, H * 0.13);
+  BOTTOM = H - Math.max(110, H * 0.15);
+  if (!course) genCourse(); else buildCourse();
+  if (state !== 'playing') { cur.x = course.start.x; cur.y = course.start.y; }
+}
+
+function renderHud() {
+  $stage.textContent = `STAGE ${stageIdx + 1}`;
+  $sens.textContent = `感度 ×${ST().sens}`;
+  $miss.textContent = `ミス ${misses}`;
+}
+
+// ====== ホーム画面 ======
+function goHome() {
+  clearTimeout(cardTimer);
+  $card.classList.remove('show');
+  finger = null; path = []; ghosts = [];
+  state = 'home';
+  $hud.style.visibility = 'hidden'; $hint.style.opacity = 0;
+  $hbest.textContent = best ? `最高記録：STAGE ${best} クリア（感度 ×${STAGES[Math.min(best, STAGES.length) - 1].sens}）` : '';
+  const cont = Math.min(best, STAGES.length - 1);
+  $btnCont.hidden = cont < 1;
+  $btnCont.textContent = `続きから（STAGE ${cont + 1}・感度 ×${STAGES[cont].sens}）`;
+  stageIdx = 0; genCourse();               // 背景用のデモコース
+  cur.x = course.start.x; cur.y = course.start.y;
+  $home.classList.remove('hide');
+}
+function startGame(idx) {
+  ensureAudio();
+  stageIdx = idx; misses = 0; ghosts = []; path = [];
+  genCourse();
+  cur.x = course.start.x; cur.y = course.start.y;
+  state = 'ready';
+  $home.classList.add('hide');
+  $hud.style.visibility = 'visible'; $hint.style.opacity = 1;
+  renderHud();
+  track('game_start', { stage: idx + 1 });
+}
+$btnStart.addEventListener('click', () => startGame(0));
+$btnCont.addEventListener('click', () => startGame(Math.min(best, STAGES.length - 1)));
+document.getElementById('homeBtn').addEventListener('click', goHome);
+document.addEventListener('visibilitychange', () => { if (document.hidden) finger = null; });
+
+// ====== 入力（トラックパッド式：指の移動量×感度で玉が動く） ======
+function pt(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault(); ensureAudio();
+  if (state === 'home') return;
+  if (state === 'dead' || state === 'clear') { if (performance.now() - cardAt > 400) advance(); return; }
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+  const p = pt(e);
+  finger = { id: e.pointerId, x: p.x, y: p.y, ldx: 0, ldy: 0 };
+});
+cv.addEventListener('pointermove', e => {
+  if (!finger || e.pointerId !== finger.id) return;
+  e.preventDefault();
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for (const ev of (evs.length ? evs : [e])) {
+    const p = pt(ev);
+    const dx = p.x - finger.x, dy = p.y - finger.y;
+    finger.x = p.x; finger.y = p.y;
+    if (state === 'ready' || state === 'playing') moveBy(dx, dy);
+    if (state !== 'ready' && state !== 'playing') break;
+  }
+});
+const endFinger = e => { if (finger && e.pointerId === finger.id) finger = null; };
+cv.addEventListener('pointerup', endFinger);
+cv.addEventListener('pointercancel', endFinger);
+
+function moveBy(fdx, fdy) {
+  const m = Math.hypot(fdx, fdy);
+  if (m < 0.001) return;
+  const s = ST().sens;
+  const dx = fdx * s, dy = fdy * s, dist = Math.hypot(dx, dy);
+  if (state === 'ready') {
+    state = 'playing';
+    run = { t0: performance.now(), fpath: 0, rev: 0, maxWarp: 0, ldx: 0, ldy: 0 };
+    path = [{ x: cur.x, y: cur.y }];
+    $hint.style.opacity = 0; sfx.go();
+  }
+  run.fpath += m;
+  if (m > 0.3 && fdx * run.ldx + fdy * run.ldy < 0) run.rev++;
+  run.ldx = fdx; run.ldy = fdy;
+  run.maxWarp = Math.max(run.maxWarp, dist);
+  // 細かく刻んで当たり判定（ワープしても壁は抜けられない）
+  const n = Math.max(1, Math.ceil(dist / STEP));
+  for (let i = 1; i <= n; i++) {
+    const p = { x: cur.x + dx * i / n, y: cur.y + dy * i / n };
+    if (p.x < 0 || p.x > W || p.y < 0 || p.y > H || !safe(p)) { cur.x = p.x; cur.y = p.y; die(); return; }
+    if (atGoal(p)) { cur.x = p.x; cur.y = p.y; clearStage(); return; }
+  }
+  cur.x += dx; cur.y += dy;
+  const l = path[path.length - 1];
+  if (Math.hypot(cur.x - l.x, cur.y - l.y) > 2) path.push({ x: cur.x, y: cur.y });
+}
+
+// ====== 結果 ======
+function tremorOf(r) {
+  const sec = (performance.now() - r.t0) / 1000;
+  return clamp(Math.round(r.rev / Math.max(1, sec) * 6), 0, 100);
+}
+function die() {
+  state = 'dead'; finger = null;
+  misses++; totalMiss++;
+  path.push({ x: cur.x, y: cur.y });
+  ghosts.push(path.slice()); if (ghosts.length > 6) ghosts.shift();
+  const prog = clamp(Math.round(nearest(cur).s / course.len * 100), 0, 99);
+  const trem = tremorOf(run);
+  const sec = ((performance.now() - run.t0) / 1000).toFixed(1);
+  sfx.zap(); buzz([80, 40, 80, 40, 160]);
+  shake = 16; flash = 1;
+  for (let i = 0; i < 5; i++) bolts.push(makeBolt(cur.x, cur.y));
+  for (let i = 0; i < 26; i++) { const a = rnd(0, 7), s = rnd(1, 7); particles.push({ x: cur.x, y: cur.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, col: Math.random() < .5 ? '#38e1ff' : '#fff', s: rnd(2, 4) }); }
+  let title;
+  if (prog < 6) title = pick(['スタート直後に感電した者', '準備運動で感電した人', '0歩目でゲームオーバー']);
+  else if (prog > 88) title = pick(['ゴール目前で散った人', 'あと一歩の男', 'ゴールが見えた瞬間に油断した者']);
+  else if (run.maxWarp > course.hw * 2.2) title = pick(['瞬間移動で壁に刺さった者', '指1ミリ＝玉ワープの人', '感度に人生を狂わされた者']);
+  else if (trem >= 55) title = pick(['指の感度が地球の自転を超えた男', '震度7の指先', '生まれたての小鹿の指']);
+  else if (misses >= 8) title = pick(['電流マニア', 'ビリビリが癖になってきた人', '感電の常連客']);
+  else title = pick(['電流に愛された人', '壁と仲良くなりすぎた者', 'イライラ棒に負けた大人']);
+  showCard(false, misses >= 2 ? `MISS ×${misses}` : 'ビリビリッ!!', title,
+    `<span>進行度 ${prog}%</span><span>指の震え度 ${trem}%</span><span>最大ワープ ${Math.round(run.maxWarp)}px</span><span>${sec}秒で感電</span>`);
+}
+function clearStage() {
+  state = 'clear'; finger = null;
+  const sec = ((performance.now() - run.t0) / 1000).toFixed(1);
+  const trem = tremorOf(run);
+  sfx.clear(); buzz([30, 40, 30]);
+  for (let i = 0; i < 40; i++) { const a = rnd(0, 7), s = rnd(1, 7); particles.push({ x: cur.x, y: cur.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, col: `hsl(${rnd(0, 360) | 0},90%,60%)`, s: rnd(2, 5) }); }
+  track('stage_clear', { stage: stageIdx + 1, sens: ST().sens, misses, time: +sec });
+  best = Math.max(best, stageIdx + 1);
+  try { localStorage.setItem('iraira_best', best); } catch (e) {}
+  let title;
+  if (misses === 0) title = stageIdx >= 5 ? 'ノーミスの化け物（人間か？）' : pick(['ノーミスの指先', 'まだ余裕の人']);
+  else if (ST().sens >= 50) title = `感度×${ST().sens}を制した変態`;
+  else if (misses >= 10) title = `根性で抜けた者（ミス${misses}回）`;
+  else title = pick(['イライラを乗り越えた者', '指先の職人', '電流とわかりあえた人']);
+  const nextS = STAGES[Math.min(stageIdx + 1, STAGES.length - 1)].sens;
+  showCard(true, `STAGE ${stageIdx + 1} CLEAR!!`, title,
+    `<span>タイム ${sec}秒</span><span>ミス ${misses}回</span><span>指の震え度 ${trem}%</span><span>次の感度 ×${nextS}</span>`);
+}
+function showCard(win, tag, title, sub) {
+  $card.classList.toggle('win', win);
+  $ctag.textContent = tag; $cttl.textContent = title; $csub.innerHTML = sub;
+  $card.classList.add('show');
+  renderHud();
+  cardAt = performance.now();
+  clearTimeout(cardTimer);
+  cardTimer = setTimeout(advance, win ? 2600 : 2200);
+}
+function advance() {
+  if (state !== 'dead' && state !== 'clear') return;
+  clearTimeout(cardTimer);
+  $card.classList.remove('show');
+  if (state === 'clear') {
+    stageIdx++; misses = 0; ghosts = [];
+    genCourse();
+  }
+  cur.x = course.start.x; cur.y = course.start.y;
+  path = []; state = 'ready'; finger = null;
+  $hint.style.opacity = 1;
+  renderHud();
+}
+function makeBolt(x, y) {
+  const pts = [[x, y]]; let a = rnd(0, Math.PI * 2), px = x, py = y;
+  for (let i = 0; i < 6; i++) { a += rnd(-0.9, 0.9); px += Math.cos(a) * rnd(8, 18); py += Math.sin(a) * rnd(8, 18); pts.push([px, py]); }
+  return { pts, life: 1 };
+}
+
+// ====== 描画 ======
+function strokeCourse(width, style, blur) {
+  const c = course;
+  ctx.save();
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.strokeStyle = style; ctx.lineWidth = width;
+  if (blur) { ctx.shadowColor = style; ctx.shadowBlur = blur; }
+  ctx.beginPath(); c.pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke();
+  ctx.restore();
+}
+function draw(now) {
+  const c = course;
+  // 背景
+  ctx.fillStyle = '#05070f'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(56,225,255,.05)'; ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 24) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 24) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  // 電流の壁（外側の発光）→ 通路
+  const pulse = 0.6 + 0.4 * Math.sin(now / 90);
+  strokeCourse(c.hw * 2 + 6, `rgba(56,225,255,${0.55 + 0.35 * pulse})`, 16);
+  for (const p of [c.start, c.goal]) {
+    ctx.save(); ctx.shadowColor = '#38e1ff'; ctx.shadowBlur = 16; ctx.fillStyle = `rgba(56,225,255,${0.55 + 0.35 * pulse})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, c.padR + 3, 0, 7); ctx.fill(); ctx.restore();
+  }
+  strokeCourse(c.hw * 2, '#141a33');
+  ctx.fillStyle = '#141a33';
+  for (const p of [c.start, c.goal]) { ctx.beginPath(); ctx.arc(p.x, p.y, c.padR, 0, 7); ctx.fill(); }
+  // 中心線（ガイド）
+  ctx.save(); ctx.setLineDash([3, 9]); strokeCourse(1.5, 'rgba(255,255,255,.12)'); ctx.restore();
+  // パッド
+  ctx.font = '900 12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(80,255,140,.18)'; ctx.beginPath(); ctx.arc(c.start.x, c.start.y, c.padR - 4, 0, 7); ctx.fill();
+  ctx.fillStyle = '#50ff8c'; ctx.fillText('START', c.start.x, c.start.y + c.padR + 14);
+  const gp = 0.5 + 0.5 * Math.sin(now / 200);
+  ctx.fillStyle = `rgba(255,194,61,${0.25 + gp * 0.25})`; ctx.beginPath(); ctx.arc(c.goal.x, c.goal.y, c.padR * 0.55, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ffc23d'; ctx.fillText('GOAL', c.goal.x, c.goal.y);
+  ctx.textBaseline = 'alphabetic';
+  // 過去の失敗軌跡
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ghosts.forEach((g, i) => {
+    ctx.strokeStyle = `rgba(255,77,109,${0.1 + 0.35 * (i + 1) / ghosts.length})`; ctx.lineWidth = 2;
+    ctx.beginPath(); g.forEach((p, j) => j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke();
+    const e = g[g.length - 1];
+    ctx.beginPath(); ctx.moveTo(e.x - 5, e.y - 5); ctx.lineTo(e.x + 5, e.y + 5); ctx.moveTo(e.x + 5, e.y - 5); ctx.lineTo(e.x - 5, e.y + 5); ctx.stroke();
+  });
+  // 今回の軌跡
+  if (path.length > 1) {
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); path.forEach((p, j) => j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke();
+  }
+  // 玉（壁に近いほど赤く）
+  let danger = 0;
+  if (state === 'playing' && !inPad(cur, c.start) && !inPad(cur, c.goal)) danger = clamp((nearest(cur).d - (c.hw - CR - 10)) / 10, 0, 1);
+  const col = state === 'dead' ? '#ff4d6d' : `hsl(${50 - danger * 50},100%,${60 - danger * 5}%)`;
+  ctx.save(); ctx.shadowColor = col; ctx.shadowBlur = 18; ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(cur.x, cur.y, CR, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cur.x - 1.5, cur.y - 1.5, CR * 0.4, 0, 7); ctx.fill();
+  ctx.restore();
+  // 雷・パーティクル
+  for (const b of bolts) {
+    ctx.strokeStyle = `rgba(200,245,255,${b.life})`; ctx.lineWidth = 2; ctx.shadowColor = '#38e1ff'; ctx.shadowBlur = 12;
+    ctx.beginPath(); b.pts.forEach(([x, y], i) => i ? ctx.lineTo(x + rnd(-2, 2), y + rnd(-2, 2)) : ctx.moveTo(x, y)); ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.col; ctx.fillRect(p.x - p.s / 2, p.y - p.s / 2, p.s, p.s); }
+  ctx.globalAlpha = 1;
+  for (const p of popups) {
+    ctx.globalAlpha = clamp(p.life * 1.5, 0, 1);
+    ctx.font = '900 16px sans-serif'; ctx.textAlign = 'center';
+    ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.strokeText(p.text, p.x, p.y);
+    ctx.fillStyle = p.col; ctx.fillText(p.text, p.x, p.y);
+  }
+  ctx.globalAlpha = 1;
+  if (flash > 0) { ctx.fillStyle = `rgba(190,240,255,${flash * 0.55})`; ctx.fillRect(0, 0, W, H); }
+}
+
+function update(dt) {
+  const f = dt / 16.667;
+  for (const p of particles) { p.x += p.vx * f; p.y += p.vy * f; p.vx *= 0.95; p.vy *= 0.95; p.life -= 0.025 * f; }
+  particles = particles.filter(p => p.life > 0);
+  for (const b of bolts) b.life -= 0.04 * f;
+  bolts = bolts.filter(b => b.life > 0);
+  for (const p of popups) { p.y -= 0.6 * f; p.life -= 0.02 * f; }
+  popups = popups.filter(p => p.life > 0);
+  shake = Math.max(0, shake - 0.9 * f);
+  flash = Math.max(0, flash - 0.06 * f);
+}
+
+function frame(now) {
+  const dt = Math.min(50, now - lastT); lastT = now;
+  update(dt);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.save();
+  if (shake > 0) ctx.translate(rnd(-shake, shake), rnd(-shake, shake));
+  draw(now);
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener('resize', layout);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', layout);
+layout(); renderHud(); goHome();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "感度バグりイライラ棒",
+  "short_name": "イライラ棒",
+  "description": "指を1ミリ動かすと玉がワープする。感度×100のイライラ棒。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05070f",
+  "theme_color": "#05070f",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
